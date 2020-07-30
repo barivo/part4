@@ -18,7 +18,7 @@ test("there is one blog entry", async () => {
 
 test("blog title to be 'First Post'", async () => {
   const response = await api.get("/api/blogs");
-  console.log(response.body);
+  console.log(response);
   expect(response.body[0].title).toContain("First");
 });
 
