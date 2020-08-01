@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+require("express-async-errors");
 const http = require("http");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -13,12 +14,12 @@ logger.info("connecting to", config.MONGODB_URI);
 mongoose
   .connect(config.MONGODB_URI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   })
   .then(() => {
     logger.info("connected to MongoDB");
   })
-  .catch(error => {
+  .catch((error) => {
     logger.error("error connection to MongoDB:", error.message);
   });
 
