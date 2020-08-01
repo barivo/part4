@@ -4,7 +4,11 @@ const mockBlogs = require("./mockBlog");
 const initialBlogs = mockBlogs.slice(0, 2);
 
 const nonExistingBlog = async () => {
-  const blog = new Blog({ title: "will be deleted soon" });
+  const blog = new Blog({
+    title: "will be deleted soon",
+    author: "foobar",
+    url: "www.foo.bar.com",
+  });
   await blog.save();
   await blog.remove();
 
