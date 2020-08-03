@@ -15,19 +15,21 @@ describe('when users already exists in the database', () => {
         id: mongoose.Types.ObjectId('any12charstr'),
         username: 'mluukkai',
         name: 'ull lukai',
+        passwordHash: await helper.generatePasswordHash(),
         blogs: [],
       },
       {
         id: '303030303030303030303030',
         username: 'hellas',
         name: 'arto hellas',
+        passwordHash: await helper.generatePasswordHash(),
         blogs: [],
       },
     ]
 
     const userObjArray = users
-      .map(user => new User(user))
-      .map(user => user.save())
+      .map((user) => new User(user))
+      .map((user) => user.save())
 
     await Promise.all(userObjArray)
   })
@@ -38,7 +40,62 @@ describe('when users already exists in the database', () => {
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    expect(users.body.map(user => user.username)).toContain('hellas')
+    expect(users.body.map((user) => user.username)).toContain('hellas')
+  })
+})
+
+describe('when adding a valid new user', () => {
+  test('successfully adds user', async () => {
+    const newUser = {
+      username: 'newest',
+      name: 'new user',
+      password: 'password',
+    }
+
+    await api.post('/api/users').send(newUser).expect(200)
+
+    const allUsers = await helper.usersInDb()
+
+    expect(allUsers.map((user) => user.username)).toContain('newest')
+  })
+})
+
+describe('when adding an invalid new user', () => {
+  test('adding a user with a username shorter than 3 characters long fails with an error message', async () => {
+    const noUserName = {
+      username: '',
+      name: 'newuser',
+      password: 'password',
+    }
+
+    const result = await api.post('/api/users').send(noUserName).expect(400)
+    expect(result.body.error).toContain('`username` is required')
+  })
+
+  test('adding a name shorter than 3 characters long fails', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const invalideName = {
+      username: 'newuser2',
+      name: 'nu',
+      password: 'password',
+    }
+
+    await api.post('/api/users').send(invalideName).expect(400)
+
+    const usersAtEnd = await helper.usersInDb()
+
+    expect(usersAtEnd.length).toBe(usersAtStart.length)
+  })
+
+  test('using a password shorter than 3 characters long, fails', async () => {
+    const invalideName = {
+      username: 'newuser3',
+      name: 'new user3',
+      password: 'pa',
+    }
+
+    await api.post('/api/users').send(invalideName).expect(400)
   })
 })
 
