@@ -3,15 +3,14 @@ const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const createUsers = require('./mockUsers')
 const helper = require('./test_helper')
 
 describe('when the database has some entries saved', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
-
-    const testObjects = helper.initialBlogs.map(entry => new Blog(entry))
-    const promiseArray = testObjects.map(entry => entry.save())
-    await Promise.all(promiseArray)
+    await helper.createUsersAndBlogs()
   })
 
   test('blogs are returned as json', async () => {
@@ -19,8 +18,13 @@ describe('when the database has some entries saved', () => {
       .get('/api/blogs')
       .expect(200)
       .expect('Content-Type', /application\/json/)
+  })
 
-    console.log(result.body)
+  test('blogs have creators', async () => {
+    const blogs = await api.get('/api/blogs')
+    const names = (await helper.usersInDb()).map(r => r.name)
+    const user = blogs.body[0].user
+    expect(names).toContain(user[0].name)
   })
 
   test('all blogs are returned', async () => {
@@ -35,13 +39,17 @@ describe('when the database has some entries saved', () => {
   })
 })
 
-describe('when adding a new blog', () => {
+describe('when adding a valid blog entry', () => {
   test('a valid blog entry can be added', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+    const users = await helper.usersInDb()
+    const userId = users[0].id
     const entry = {
       title: 'New entry',
       author: 'testing',
       url: 'https://www.test.com/',
       likes: 17,
+      id: userId,
     }
 
     await api
@@ -50,10 +58,17 @@ describe('when adding a new blog', () => {
       .expect(201)
       .expect('Content-Type', /application\/json/)
     const blogsAtEnd = await helper.blogsInDb()
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+    expect(blogsAtEnd).toHaveLength(blogsAtStart.length + 1)
 
     const titles = blogsAtEnd.map(r => r.title)
     expect(titles).toContain('New entry')
+  })
+
+  test('the root blogs route displays creators', async () => {
+    const blogs = await api.get('/api/blogs')
+    const names = (await helper.usersInDb()).map(r => r.name)
+    const user = blogs.body[0].user
+    expect(names).toContain(user[0].name)
   })
 
   test("can updated an existing blog entry's likes", async () => {
@@ -73,14 +88,19 @@ describe('when adding a new blog', () => {
 
     expect(result.body.likes).toBe(entry.likes + 1)
   })
+})
 
-  test('blog without an author is not added', async () => {
+describe('when adding invalid blog entries', () => {
+  test('blogs without authors are not added', async () => {
     const blogsAtStart = await helper.blogsInDb()
     const badDataEntry = {
       title: 'Title only',
     }
 
-    await api.post('/api/blogs').send(badDataEntry).expect(400)
+    await api
+      .post('/api/blogs')
+      .send(badDataEntry)
+      .expect(400)
 
     const blogsAtEnd = await helper.blogsInDb()
     expect(blogsAtEnd).toHaveLength(blogsAtStart.length)
@@ -101,12 +121,10 @@ describe('when viewing a specific blog', () => {
   test('fails with statuscode 404 if a blog does not exist', async () => {
     const validNonexistingId = await helper.nonExistingBlog()
 
-    console.log(validNonexistingId)
-
     await api.get(`/api/blogs/${validNonexistingId}`).expect(404)
   })
 
-  test('fails with statuscode 400 id is invalid', async () => {
+  test('fails with statuscode 400 if id is invalid', async () => {
     const invalidId = 'xxx5a3d5da59070081a82a3445'
 
     await api.get(`/api/blogs/${invalidId}`).expect(400)

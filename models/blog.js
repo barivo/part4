@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 mongoose.set('useFindAndModify', false)
+mongoose.set('useCreateIndex', true)
 
 const blogSchema = new mongoose.Schema({
   title: {
@@ -17,6 +18,12 @@ const blogSchema = new mongoose.Schema({
     minlength: 5,
   },
   likes: { type: Number, default: 0 },
+  user: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
 })
 
 blogSchema.set('toJSON', {

@@ -1,7 +1,7 @@
 const Blog = require('../models/blog')
 const User = require('../models/user')
 const mockBlogs = require('./mockBlog')
-const bcrypt = require('bcrypt')
+const createUsers = require('./mockUsers')
 
 const initialBlogs = mockBlogs.slice(0, 2)
 
@@ -19,16 +19,37 @@ const nonExistingBlog = async () => {
 
 const blogsInDb = async () => {
   const blogs = await Blog.find({})
-  return blogs.map((entries) => entries.toJSON())
+  return blogs.map(entries => entries.toJSON())
 }
 
 const usersInDb = async () => {
   const users = await User.find({})
-  return users.map((u) => u.toJSON())
+  return users.map(u => u.toJSON())
 }
 
-const generatePasswordHash = async () => {
-  return await bcrypt.hash('password', 10)
+const createUsersAndBlogs = async () => {
+  await createUsers()
+
+  const users = await usersInDb()
+  const randomUser = users[0]
+
+  const testObjects = initialBlogs
+    .map(entry => ({ ...entry, user: [randomUser.id] }))
+    .map(entry => new Blog(entry))
+
+  const promiseArray = testObjects.map(entry => entry.save())
+  await Promise.all(promiseArray)
+}
+
+const randomUserId = async () => {
+  const users = await usersInDb()
+  if (users[0]) {
+    return users[0].id
+  } else {
+    await createUsers()
+    const users = await usersInDb()
+    return users[0].id
+  }
 }
 
 module.exports = {
@@ -36,5 +57,5 @@ module.exports = {
   nonExistingBlog,
   blogsInDb,
   usersInDb,
-  generatePasswordHash,
+  createUsersAndBlogs,
 }

@@ -4,34 +4,16 @@ const app = require('../app')
 const api = supertest(app)
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const createUsers = require('./mockUsers')
 const helper = require('./test_helper')
+
+afterEach(async () => {
+  await User.deleteMany({})
+})
 
 describe('when users already exists in the database', () => {
   beforeEach(async () => {
-    await User.deleteMany({})
-
-    const users = [
-      {
-        id: mongoose.Types.ObjectId('any12charstr'),
-        username: 'mluukkai',
-        name: 'ull lukai',
-        passwordHash: await helper.generatePasswordHash(),
-        blogs: [],
-      },
-      {
-        id: '303030303030303030303030',
-        username: 'hellas',
-        name: 'arto hellas',
-        passwordHash: await helper.generatePasswordHash(),
-        blogs: [],
-      },
-    ]
-
-    const userObjArray = users
-      .map((user) => new User(user))
-      .map((user) => user.save())
-
-    await Promise.all(userObjArray)
+    await createUsers()
   })
 
   test('displays all the users', async () => {
@@ -40,7 +22,7 @@ describe('when users already exists in the database', () => {
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    expect(users.body.map((user) => user.username)).toContain('hellas')
+    expect(users.body.map(user => user.username)).toContain('hellas')
   })
 })
 
@@ -52,11 +34,14 @@ describe('when adding a valid new user', () => {
       password: 'password',
     }
 
-    await api.post('/api/users').send(newUser).expect(200)
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(200)
 
     const allUsers = await helper.usersInDb()
 
-    expect(allUsers.map((user) => user.username)).toContain('newest')
+    expect(allUsers.map(user => user.username)).toContain('newest')
   })
 })
 
@@ -68,7 +53,10 @@ describe('when adding an invalid new user', () => {
       password: 'password',
     }
 
-    const result = await api.post('/api/users').send(noUserName).expect(400)
+    const result = await api
+      .post('/api/users')
+      .send(noUserName)
+      .expect(400)
     expect(result.body.error).toContain('`username` is required')
   })
 
@@ -81,7 +69,10 @@ describe('when adding an invalid new user', () => {
       password: 'password',
     }
 
-    await api.post('/api/users').send(invalideName).expect(400)
+    await api
+      .post('/api/users')
+      .send(invalideName)
+      .expect(400)
 
     const usersAtEnd = await helper.usersInDb()
 
@@ -95,7 +86,10 @@ describe('when adding an invalid new user', () => {
       password: 'pa',
     }
 
-    await api.post('/api/users').send(invalideName).expect(400)
+    await api
+      .post('/api/users')
+      .send(invalideName)
+      .expect(400)
   })
 })
 

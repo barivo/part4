@@ -1,0 +1,9 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+
+{
+    "url": "www.boom.com",
+    "title": "boom boom?",
+    "author": "boom one",
+    "id": "5f29ce7757d9850f79768fc5"
+}
