@@ -39,6 +39,12 @@ const createUsersAndBlogs = async () => {
 
   const promiseArray = testObjects.map(entry => entry.save())
   await Promise.all(promiseArray)
+
+  const newBlogs = testObjects.map(blog => blog._id)
+  const oldBlogs = randomUser.blogs
+  await User.findByIdAndUpdate(randomUser.id, {
+    blogs: [...oldBlogs, ...newBlogs],
+  })
 }
 
 const randomUserId = async () => {

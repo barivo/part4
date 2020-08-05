@@ -7,13 +7,19 @@ const User = require('../models/user')
 const createUsers = require('./mockUsers')
 const helper = require('./test_helper')
 
-afterEach(async () => {
+test('first test', async () => {
+  await Blog.deleteMany({})
   await User.deleteMany({})
+  await helper.createUsersAndBlogs()
+})
+
+afterEach(async () => {
+  await Blog.deleteMany({})
 })
 
 describe('when users already exists in the database', () => {
   beforeEach(async () => {
-    await createUsers()
+    await helper.createUsersAndBlogs()
   })
 
   test('displays all the users', async () => {
