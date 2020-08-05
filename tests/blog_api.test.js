@@ -39,21 +39,33 @@ describe('when the database has some entries saved', () => {
   })
 })
 
-describe('when adding a valid blog entry', () => {
+describe('when adding a valid blog entry as a signed in user', () => {
   test('a valid blog entry can be added', async () => {
     const blogsAtStart = await helper.blogsInDb()
     const users = await helper.usersInDb()
     const userId = users[0].id
+
+    const username = users[0].username
+    const password = 'password'
+
+    const response = await api
+      .post('/api/login')
+      .send({ username, password })
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    const token = response.body.token
+
     const entry = {
       title: 'New entry',
       author: 'testing',
       url: 'https://www.test.com/',
       likes: 17,
-      id: userId,
     }
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(entry)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -100,7 +112,7 @@ describe('when adding invalid blog entries', () => {
     await api
       .post('/api/blogs')
       .send(badDataEntry)
-      .expect(400)
+      .expect(401)
 
     const blogsAtEnd = await helper.blogsInDb()
     expect(blogsAtEnd).toHaveLength(blogsAtStart.length)
