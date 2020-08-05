@@ -47,17 +47,6 @@ const createUsersAndBlogs = async () => {
   })
 }
 
-const randomUserId = async () => {
-  const users = await usersInDb()
-  if (users[0]) {
-    return users[0].id
-  } else {
-    await createUsers()
-    const users = await usersInDb()
-    return users[0].id
-  }
-}
-
 module.exports = {
   initialBlogs,
   nonExistingBlog,

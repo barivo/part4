@@ -143,15 +143,6 @@ describe('when viewing a specific blog', () => {
   })
 })
 
-describe('when deleting a blog', () => {
-  test('can delete a blog entry', async () => {
-    const blogsAtStart = await helper.blogsInDb()
-    const entry = blogsAtStart[0]
-
-    await api.delete(`/api/blogs/${entry.id}`).expect(204)
-  })
-})
-
 afterAll(() => {
   mongoose.connection.close()
 })

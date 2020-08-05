@@ -5,6 +5,21 @@ const api = supertest(app)
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
 
+const username = 'mluukkai'
+const password = 'password'
+
+const loginHelper = async () => {
+  const response = await api
+    .post('/api/login')
+    .send({ username, password })
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+  const token = response.body.token
+
+  return token
+}
+
 beforeEach(async () => {
   await Blog.deleteMany({})
   const testObjects = helper.initialBlogs.map(entry => new Blog(entry))
@@ -30,6 +45,8 @@ test("there is an 'id' property defined on each blog", async () => {
 })
 
 test('making an HTTP POST request to /api/blogs url creates a new post', async () => {
+  const token = await loginHelper()
+
   const newPost = {
     title: 'Newest blog entry',
     author: 'testing',
@@ -39,12 +56,15 @@ test('making an HTTP POST request to /api/blogs url creates a new post', async (
 
   const result = await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
     .send(newPost)
     .expect(201)
   expect(result.body.title).toContain(newPost.title)
 })
 
 test('if a new post without a likes propery is added, it defaults to 0 likes', async () => {
+  const token = await loginHelper()
+
   const newPost = {
     title: 'Newest blog entry',
     author: 'testing',
@@ -53,12 +73,15 @@ test('if a new post without a likes propery is added, it defaults to 0 likes', a
 
   const result = await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
     .send(newPost)
     .expect(201)
   expect(result.body.likes).toBe(0)
 })
 
 test('adding posts without a title and url fails with a 400 status code', async () => {
+  const token = await loginHelper()
+
   const newPost = {
     title: '',
     author: 'testing',
@@ -67,6 +90,7 @@ test('adding posts without a title and url fails with a 400 status code', async 
 
   await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
     .send(newPost)
     .expect(400)
 })
