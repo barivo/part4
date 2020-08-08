@@ -13,12 +13,14 @@ const getTokenFrom = request => {
 }
 
 blogRouter.get('/', async (request, response) => {
-  const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 })
+  const blogs = await Blog.find({}).populate('user', {
+    username: 1,
+    name: 1,
+  })
   response.json(blogs.map(blog => blog.toJSON()))
 })
 
 blogRouter.get('/:id', async (request, response) => {
-  const body = request.body
   const id = request.params.id
   const result = await Blog.findById(id)
   if (result) {
@@ -46,7 +48,7 @@ blogRouter.post('/', async (request, response) => {
     author: body.author,
     url: body.url,
     likes: body.likes,
-    user: user ? user._id : [],
+    user: body.userId ? [body.userId] : [],
   })
 
   const result = await blog.save()
@@ -78,15 +80,27 @@ blogRouter.delete('/:id', async (request, response) => {
 
   const body = request.body
   const token = body.token ? body.token : null
+
   const decodedToken = jwt.verify(token, process.env.SECRET)
 
-  if (blog.user.toString() !== decodedToken.id.toString()) {
+  const user = await User.findById(decodedToken.id)
+
+  if (
+    typeof blog.user[0] === 'undefined' ||
+    user._id.toString() !== blog.user[0].toString()
+  ) {
     return response
       .status(401)
       .json({ error: 'only logged-in users may delete blogs' })
   }
 
   await Blog.findByIdAndRemove(blogId)
+
+  user.blogs = user.blogs.filter(
+    b => b.id.toString() !== request.params.id.toString()
+  )
+  await user.save()
+
   response.status(204).end()
 })
 
