@@ -7,6 +7,8 @@ const User = require('../models/user')
 const createUsers = require('./mockUsers')
 const helper = require('./test_helper')
 
+let token = null
+
 describe('when the database has some entries saved', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
@@ -43,7 +45,6 @@ describe('when adding a valid blog entry as a signed in user', () => {
   test('a valid blog entry can be added', async () => {
     const blogsAtStart = await helper.blogsInDb()
     const users = await helper.usersInDb()
-    const userId = users[0].id
 
     const username = users[0].username
     const password = 'password'
@@ -54,7 +55,7 @@ describe('when adding a valid blog entry as a signed in user', () => {
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    const token = response.body.token
+    token = response.body.token
 
     const entry = {
       title: 'New entry',
@@ -95,6 +96,7 @@ describe('when adding a valid blog entry as a signed in user', () => {
 
     const result = await api
       .put(`/api/blogs/${entry.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .send(updatedEntry)
       .expect(200)
 
