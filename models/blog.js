@@ -2,6 +2,8 @@ const mongoose = require('mongoose')
 mongoose.set('useFindAndModify', false)
 mongoose.set('useCreateIndex', true)
 
+const commentSchema = new mongoose.Schema({ text: 'string' })
+
 const blogSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -18,6 +20,7 @@ const blogSchema = new mongoose.Schema({
     minlength: 5,
   },
   likes: { type: Number, default: 0 },
+  comments: [commentSchema],
   user: [
     {
       type: mongoose.Schema.Types.ObjectId,

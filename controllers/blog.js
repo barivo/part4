@@ -12,8 +12,12 @@ const User = require('../models/user')
 
 router.get('/', async (request, response) => {
   const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 })
-
   response.json(blogs)
+})
+
+router.get('/:id', async (request, response) => {
+  const blog = await Blog.findById(request.params.id)
+  response.status(201).json(blog)
 })
 
 router.delete('/:id', async (request, response) => {
